@@ -138,23 +138,19 @@
       <div id="messages" aria-live="polite"></div>
 
       <div class="quick" id="quickReplies">
-        <!-- quick reply buttons will be added by JS -->
-      </div>
+        </div>
 
       <div class="composer">
         <input id="inputMsg" class="input" autocomplete="off" placeholder="Ask MacroBot anything..." />
         <button id="sendBtn" class="btn">Send</button>
       </div>
-      <div class="footer-note">Tip: use quick buttons for fast replies. MacroBot runs offline; toggle AI to enable external API later.</div>
+      <div class="footer-note">Tip: use quick buttons for fast replies. Toggle AI to ON to use the integrated Gemini API.</div>
     </div>
   </div>
 
 <script>
 /*
-  MacroBot v1 — offline-friendly chat UI
-  - Persistent history via localStorage
-  - Simple rule-based replies (easy to expand)
-  - AI toggle placeholder: set `aiEnabled = true` and implement sendToAI()
+  MacroBot v2 — Gemini API Integration
 */
 
 const messagesEl = document.getElementById('messages');
@@ -164,7 +160,12 @@ const clearBtn = document.getElementById('clearBtn');
 const aiToggleBtn = document.getElementById('aiToggle');
 const quickRepliesEl = document.getElementById('quickReplies');
 
-let aiEnabled = false; // toggle to send messages to API (placeholder)
+// === 🔑 YOUR GEMINI API KEY HAS BEEN ADDED HERE 🔑 ===
+// WARNING: This key is visible in client-side code. Use a secure backend proxy for production.
+const GEMINI_API_KEY = 'AIzaSyDB0hOMEuj_VChdXGhJUh9IhfjzTC-whUI';
+// =======================================================
+
+let aiEnabled = false; // toggle to send messages to API
 const QUICK = ["Hi", "Help", "About MacroBot", "How to use", "Contact"];
 
 function timeNow(){
@@ -175,7 +176,9 @@ function timeNow(){
 function renderMsg(text, who='bot', time=null){
   const el = document.createElement('div');
   el.className = 'msg ' + (who === 'user' ? 'user' : 'bot');
-  el.innerHTML = `<div>${escapeHtml(text)}</div><div class="time">${time||timeNow()}</div>`;
+  // Simple check for Markdown formatting in bot replies (not a full parser)
+  const contentHtml = who === 'bot' ? marked(escapeHtml(text)) : escapeHtml(text);
+  el.innerHTML = `<div>${contentHtml}</div><div class="time">${time||timeNow()}</div>`;
   messagesEl.appendChild(el);
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
@@ -193,7 +196,7 @@ function localReply(inText){
   if (text.includes('name')) return "I'm MacroBot — your assistant from TheMacroIndustry.";
   if (text.includes('about')) return "MacroBot is a lightweight assistant you can run offline or connect to an AI later.";
   if (text.includes('help')) return "Try: 'About MacroBot', 'How to use', or ask any question. Use quick buttons for fast actions.";
-  if (text.includes('how to use')) return "Type a message and press Send. Use quick replies for common tasks. Toggle AI to ON to use an online API (you must provide API key later).";
+  if (text.includes('how to use')) return "Type a message and press Send. Use quick replies for common tasks. **Toggle AI to ON** to use the online Gemini API.";
   if (text.includes('contact')) return "You can reach TheMacroIndustry via GitHub: https://github.com/SBMacroGamerz";
   if (text.includes('time')) return `Local time: ${new Date().toLocaleString()}`;
   if (text.includes('joke')) return "Why did the coder quit his job? Because he didn't get arrays. 😅";
@@ -202,12 +205,53 @@ function localReply(inText){
   return "I didn't understand exactly — could you rephrase? Or toggle AI for smarter answers.";
 }
 
-/* Placeholder: implement your external API call here and return a string */
+// === 🤖 GEMINI API CALL IMPLEMENTATION 🤖 ===
 async function sendToAI(userText){
-  // Example flow (not active): send fetch to your own server or OpenAI.
-  // For now return localReply as fallback.
-  return localReply(userText);
+  if (!GEMINI_API_KEY) {
+    throw new Error("GEMINI_API_KEY is not configured.");
+  }
+
+  const API_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+
+  const requestBody = {
+    contents: [{
+      role: "user",
+      parts: [{ text: userText }]
+    }]
+  };
+
+  try {
+    const response = await fetch(API_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody)
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        const errorMsg = data.error ? data.error.message : response.statusText;
+        console.error("API Error Response:", data);
+        throw new Error(`API Error (${response.status}): ${errorMsg}`);
+    }
+
+    // Check if content was generated successfully
+    if (data.candidates && data.candidates.length > 0 && data.candidates[0].content.parts.length > 0) {
+      return data.candidates[0].content.parts[0].text;
+    } else {
+      // Handle cases where the response is blocked or empty
+      const blockReason = data.candidates?.[0]?.finishReason || 'Unknown';
+      return `[API] I couldn't generate a response for that. Finish reason: ${blockReason}. Try rephrasing.`;
+    }
+  } catch (error) {
+    console.error("Gemini API call failed:", error);
+    // Use the local reply as a final fallback
+    return `[API ERROR] Could not connect to AI: ${error.message}. Fallback: ${localReply(userText)}`;
+  }
 }
+// ===========================================
 
 /* Persist & load */
 function loadHistory(){
@@ -245,9 +289,10 @@ async function handleSend(){
 
   // decide how to reply
   if (aiEnabled){
+    // Add temporary message
     renderMsg("Thinking...", 'bot');
-    // remove the "Thinking..." placeholder before replacing
     const botPlaceholder = messagesEl.querySelector('.msg.bot:last-child');
+    
     try {
       const aiResp = await sendToAI(text);
       if (botPlaceholder) botPlaceholder.remove();
@@ -255,7 +300,8 @@ async function handleSend(){
       saveMessage(aiResp,'bot');
     } catch(err){
       if (botPlaceholder) botPlaceholder.remove();
-      const errText = "AI error. Using offline reply: " + localReply(text);
+      // Use the error message returned by sendToAI, which includes the local reply
+      const errText = err.message || "An unexpected AI error occurred.";
       renderMsg(errText, 'bot');
       saveMessage(errText,'bot');
     }
@@ -291,18 +337,28 @@ aiToggleBtn.addEventListener('click', ()=>{
   aiEnabled = !aiEnabled;
   aiToggleBtn.innerText = 'AI: ' + (aiEnabled ? 'ON' : 'OFF');
   aiToggleBtn.style.borderColor = aiEnabled ? 'rgba(0,209,255,0.6)' : 'rgba(255,255,255,0.03)';
+  if (aiEnabled) {
+    renderMsg("AI mode is **ON**. Messages will now be sent to the Gemini API.", 'bot');
+  } else {
+    renderMsg("AI mode is **OFF**. MacroBot is now using offline, rule-based replies.", 'bot');
+  }
 });
+
+// A placeholder for a simple Markdown renderer, since Gemini uses Markdown
+// This is not a full-featured renderer like marked.js, just handles basic bolding
+function marked(str) {
+    return str
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // **bold**
+        .replace(/__(.*?)__/g, '<strong>$1</strong>')    // __bold__
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')            // *italic*
+        .replace(/_(.*?)_/g, '<em>$1</em>')              // _italic_
+        .replace(/\n/g, '<br>');                         // newlines
+}
 
 /* startup */
 makeQuick();
 loadHistory();
 inputEl.focus();
-
-/* Optional: expose a function to configure external AI from a dev console:
-   Example:
-   window.setAIHandler = (fn) => { sendToAI = fn; aiEnabled = true; aiToggleBtn.innerText='AI: ON'; }
-*/
 </script>
 </body>
 </html>
-
