@@ -4,58 +4,120 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MacroBot</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 
 <style>
+  /* Use CSS Variables for easy theme changing */
+  :root {
+    --bg-primary: #121212;      
+    --bg-secondary: #1e1e1e;    
+    --text-color: #e0e0e0;      
+    --user-bubble: #007bff;     
+    --bot-bubble: #333333;      
+    --accent-color: #00bcd4;    
+    --border-radius-lg: 12px;
+    --border-radius-sm: 8px;
+  }
+
   body {
-    background: #0d0d0d;
-    color: white;
-    font-family: Arial, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-color);
+    font-family: 'Roboto', sans-serif;
     margin: 0;
     padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
   }
   .chat-container {
     width: 100%;
-    max-width: 450px;
-    margin: auto;
-    margin-top: 40px;
-    background: #111;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 0 12px #00aaff;
+    max-width: 600px;
+    height: 90vh; 
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius-lg);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
   }
+  .header {
+    text-align: center;
+    padding: 15px;
+    background: #252525;
+    border-bottom: 1px solid #333;
+    color: var(--accent-color);
+    font-size: 1.5em;
+    font-weight: 500;
+  }
+  
+  /* --- Chat Box Area --- */
+  #chatBox {
+    flex-grow: 1; 
+    overflow-y: auto;
+    padding: 20px;
+  }
+  /* Style the scrollbar (optional, but modern) */
+  #chatBox::-webkit-scrollbar {
+    width: 6px;
+  }
+  #chatBox::-webkit-scrollbar-thumb {
+    background: var(--bot-bubble);
+    border-radius: 3px;
+  }
+
+  /* --- Message Bubbles --- */
   .msg {
-    padding: 10px;
-    margin-top: 10px;
-    border-radius: 8px;
-    line-height: 1.5;
+    max-width: 80%;
+    padding: 10px 15px;
+    margin-bottom: 15px;
+    border-radius: var(--border-radius-sm);
+    line-height: 1.6;
   }
   .user {
-    background: #0059ff;
-    text-align: right;
+    background: var(--user-bubble);
+    color: white;
+    margin-left: auto; 
+    border-top-right-radius: 2px; 
   }
   .bot {
-    background: #262626;
+    background: var(--bot-bubble);
+    color: var(--text-color);
+    margin-right: auto; 
+    border-top-left-radius: 2px;
   }
+  
+  /* --- Input Area --- */
   #inputArea {
     display: flex;
-    margin-top: 15px;
+    padding: 15px;
+    background: #252525;
+    border-top: 1px solid #333;
+    gap: 10px;
   }
   #userInput {
     flex: 1;
-    padding: 10px;
-    border: none;
-    border-radius: 8px;
+    padding: 12px;
+    border: 1px solid #444;
+    border-radius: var(--border-radius-lg);
+    background: #333;
+    color: white;
     outline: none;
+    font-size: 16px;
+    resize: none;
   }
   #sendBtn {
-    padding: 10px 18px;
-    margin-left: 8px;
-    background: #00aaff;
+    padding: 12px 20px;
+    background: var(--accent-color);
     border: none;
-    border-radius: 8px;
-    color: black;
-    font-weight: bold;
+    border-radius: var(--border-radius-lg);
+    color: #121212;
+    font-weight: 700;
     cursor: pointer;
+    transition: background 0.3s;
+  }
+  #sendBtn:hover {
+    background: #00a0b0;
   }
 </style>
 
@@ -63,11 +125,11 @@
 <body>
 
 <div class="chat-container">
-  <h2>🤖 MacroBot</h2>
+  <div class="header">MacroBot</div>
   <div id="chatBox"></div>
 
   <div id="inputArea">
-    <input type="text" id="userInput" placeholder="Ask MacroBot..." />
+    <input type="text" id="userInput" placeholder="Type your macro request..." />
     <button id="sendBtn">Send</button>
   </div>
 </div>
@@ -77,26 +139,40 @@ const chatBox = document.getElementById("chatBox");
 const userInput = document.getElementById("userInput");
 const sendBtn = document.getElementById("sendBtn");
 
+// 1. REVERTED: Removed conversationHistory array
+
 function addMessage(text, sender){
   let div = document.createElement("div");
   div.className = "msg " + sender;
-  div.innerText = text;
+  div.innerText = text; 
   chatBox.appendChild(div);
   chatBox.scrollTop = chatBox.scrollHeight;
 }
 
+// 2. REVERTED: Function sends only the current message string
 async function sendToMacroServer(msg){
   try {
-    const res = await fetch("https://macrobot-backend.vercel.app/chat", {
+    const SERVER_URL = "http://127.0.0.1:3000/api/ai-query";
+    
+    const res = await fetch(SERVER_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: msg })
+      body: JSON.stringify({ 
+        // Sending only the simple 'message' field
+        message: msg 
+      })
     });
+
+    if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(`Server responded with status ${res.status}: ${errorData.reply || res.statusText}`);
+    }
 
     const data = await res.json();
     return data.reply;
   } catch (err){
-    return "Server error ❌";
+    console.error("Connection/Server Error:", err);
+    return `Server error ❌: Failed to connect or received a bad response. (${err.message})`;
   }
 }
 
@@ -104,14 +180,24 @@ async function sendMsg(){
   let text = userInput.value.trim();
   if(!text) return;
 
+  // Add user message to chat box
   addMessage(text, "user");
+  
   userInput.value = "";
 
-  addMessage("MacroBot typing...", "bot");
+  // Add 'typing...' message
+  addMessage("MacroBot is thinking...", "bot");
 
+  // Send the message string
   let reply = await sendToMacroServer(text);
 
-  document.querySelector(".bot:last-child").innerText = reply;
+  // Remove the temporary 'typing...' message
+  document.querySelector(".bot:last-child").remove();
+
+  // Add the final bot reply to chat box
+  addMessage(reply, "bot");
+  
+  // 3. REVERTED: Removed history logging
 }
 
 sendBtn.onclick = sendMsg;

@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>MacroBot</title>
+<link rel="icon" href="data:,">
+<style>
+  :root{
+    --bg:#0b0f14;
+    --card:#0f1720;
+    --accent:#00d1ff;
+    --muted:#9aa6b2;
+    --bubble-user:#0b84ff;
+    --bubble-bot:#1b2430;
+    --glass:   }
+  html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;}
+  body{background:linear-gradient(180deg,#05070a 0%, #071021 100%);color:#e6eef3;display:flex;align-items:center;justify-content:center;padding:14px;}
+  .app {
+    width:100%;
+    max-width:760px;
+    height:100%;
+    max-height:960px;
+    background:linear-gradient(180deg,var(--card), #07101a);
+    border-radius:18px;    box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    display:flex;
+    flex-direction:column;
+   lex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.03);
+    background: linear-gradient(90deg, rgba(0,0,0,0.04), transparent);
+  }
+  .brand {
+    display:flex;align-items:center;gap:10px;
+  }
+  .logo{
+    width:48px;height:48px;border-radius:10px;
+   background:linear-gradient(135deg,var(--accent),#6b8cff);
+    box-shadow: 0 6px 18px rgba(0,209,255,0.08), inset 0 -6px 18px rgba(255,255,255,0.02);
+    display:flex;align-items:center;justify-content:center;font-weight:700;color:#00131a;font-size:18px;
+  }
+  .title {font-size:16px;font-weight:600}
+  .subtitle {font-size:12px;color:var(--muted);margin-top:2px}
+
+ /* Chat area */
+ .chat-wrap{flex:1;display:flex;flex-dir  #messages {
+    padding:16px;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    background:
+      radial-gradient(transparent 20%, rgba(255,255,255,0.002) 20%) 0 0/12px 12px;
+    display:flex;flex-direction:column;gap:10px;
+  }
+
+  .msg 
+    max-width:85%;
+    padding:10px 12px;
+    boder-radius:12px;
+    line-height:1.35;
+    box-shadow: 0 4px 12px rgba(2,6,23,0.6);
+    psition:relative;
+    word-break:
+  .msg.user {
+    margin-left:auto;
+    background:linear-gradient(180deg,var(--bubble-user), #0a68d6);
+    color:whit;
+    border-bottom-right-radius:4px;
+  }
+  .msg.bot {
+    margin-right:auto;
+    backgroun:linear-gradient(180deg,var(--bubble-bot), rgba(27,36,48,0.9));
+    color:#dbeefb;
+    border-bottom-left-radius:4px;
+    border:1x solid rgba(255,255,255,0.02);
+  
+  .time {font-size:11px;color:var(--muted);margin-top:6px;text-align:right}
+.meta {font-size:11px;color:var(--muted);margin-top:6px}
+  /* qu
+  .quick {
+    display:flex;gap:8px;flex-wrap:wrap;padding:8px 16px;border-top:1px solid rgba(255,255,255,0.02);
+    background:var(--glass);
+  }
+  .quick button{
+    background:transparent;border:1px solid rgba(255,255,255,0.05);padding:8px 12px;border-radius:10px;color:var(--muted);
+    font-weight:600;cursor:pointer;font-size:13px;
+  }
+  .quik button:hover{transform:translateY(-2px)}
+
+  /* composer */
+  .composer{display:flex;gap:8px;padding:12px;border-top:1px solid rgba(255,255,255,0.03);align-items:center;background:linear-gradient(0deg, rgba(255,255,255,0.01), transparent);}
+  .input{
+    flex:1;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,0.03);
+    background:rgba(255,255,255,0.02);color:inherit;font-size:15px;outline:none;   padding:10px 14px;border-radius:10px;border:none;cursor:pointer;font-weight:700;
+    background:linear-gradient(180deg,var(--accent), #007da8);color:#021217;
+  }
+  .small-btn {background:transparent;border:1px solid rgba(255,255,255,0.03);color:var(--muted);padding:8px;border-radius:10px}
+
+  /* footer note */
+  .footer-note {font-size:12px;color:var(--muted);padding:8px 14px;text-align:center;border-top:1px solid rgba(255,255,255,0.02);}
+
+  @media (max-width:420px){
+    .logo{width:44px;height:44px}
+    .brand .title{font-size:15px}
+    .brand .subtitle{font-size:11px}
+    .composer{padding:10px}
+  }
+</style>
+</head>
+<body
+  <div class="app" role="application" aria-label="MacroBot chat">
+    <div class <div class="brand">
+        <div class="logo">MB</div>
+        <div>
+          <div class="title">MacroBot</div>
+          <div class="subtitle">Your pocket AI assistant — offline ready</div>
+        </div>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+        <button id="clearBtn" class="small-btn" title="Clear chat">Clear</button>
+        <button id="aiToggle" class="small-btn" title="Toggle AI (placeholder)">AI: OFF</button>
+      </div>
+    </div>
+    <div class="chat-wrap">
+      <div id="messages" aria-live="polite"></ class="quick" id="quickReplies">
+        <!-- quick reply buttons will be added by JS -->
+      </div>
+
+      <div class="composer">
+        <input id="inputMsg" class="input" autocomplete="off" placeholder="Ask MacroBot anything..." />
+        <button id="sendBtn" class="btn">Send</button>
+      </div>
+      <div class="footer-note">Tip: use quick buttons for fast replies. MacroBot runs offline; toggle AI to enable external API later.</div>
+    </div>
+  </div>
+
+<script>
+/
+  Macr - Persistent history via localStorage
+  - Simple rule-based replies (easy to expand)
+  - AI toggle placeholder: set `aiEnabled = true` and implement sendToAI()
+*/
+
+const messagesEl = document.getElementById('messages');
+const inputEl = document.getElementById('inputMsg');
+const sendBtn = document.getElementById('sendBtn');
+const clearBtn = document.getElementById('clearBtn');
+const aiToggleBtn = document.getElementById('aiToggle');
+const quickRepliesEl = document.getElementById('quickReplies');
+
+let aiEnabled = false; // toggle to send messages to API (placeholder)
+constQUICK = ["Hi", "Help", "About MacroBot", "How to use", "Conion timeNow(){
+  const d = new Date();
+  return d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+}
+
+function renderMsg(text, who='bot', time=null)
+  const el = document.createElement('div');
+  el.className = 'msg ' + (who === 'user' ? 'user' : 'bot');
+  el.innerHTML = `<div>${escapeHtml(text)}</div><div class="time">${time||timeNow()}</div>`;
+  messagesEl.appendChild(el);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function escapeHtml(s){
+  return s.replaceAll('&','&a'<','&lt;').replaceAll('>','&gt;');
+}
+
+/* Simple rule-based reply engine. Add patterns and replies here. */
+function localReply(inText){
+  const text = inText.toLowerCase().trim();
+
+  // greetings
+  if (/^(hi|hello|hey|holla|yo)\b/.test(text)) return "Hello boss! MacroBot here. How can I help you today?";
+  if (text.includes('name')) return "I'm MacroBot — your assistant from TheMacroIndustry.";
+  if (text.includes('about')) return "MacroBot is a lightweight assistant you can run offline or connect to an AI later.";
+  if (text.includes('help')) return "Try: 'About MacroBot', 'How to use', or ask any question. Use quick buttons for fast actions.";
+  if (text.includes('how to use')) return "Type a message and press Send. Use quick replies for common tasks. Toggle AI to ON to use an online API (you must provide API key later).";
+  if (text.includes('contact')) return "You can reach TheMacroIndustry via GitHub: https://github.com/SBMacroGamerz";
+  if (text.includes('time'))return `Local time: ${new Date().toLocaleString()}`;
+  if (text.includes('joke')) return "Why did the coder quit his job? Because he didn't get arrays. 😅";
+  if (text.length < 3) retun "Can you tell me more? Try writing a full sentence.";
+  // fallback
+  return "I didn't understand exactly — could you rephrase? Or toggle AI for smarter
+
+/* Placeholder: implement your external API call here and return a string */
+async function sendToAI(userText){
+  // Example flow (not active): send fetch to your own server or OpenAI.
+  // For now return localReply as fallback.
+  return localReply(userText);
+}
+
+/* Persist & load */
+function loadHistory()
+  const raw = localStorage.getItem('macrobot_history');
+  if (!raw) {
+    // show welcome
+    renderMsg("Welcome to MacroBot — say 'Hi' or press a quick suggestion to begin.");
+    return;
+  }
+  try {
+    const arr = JSON.parse(raw);
+    arr.forEach(item > {
+      renderMsg(item.text, item.who, item.ti
+  } catch(e){
+    localStorage.removeItem('macrobot_history');
+  }
+}
+function saveMessage(text, who){
+  const time = timeNow();
+  let arr = []
+  try { arr = JSON.parse(localStorage.getItem('macrobot_history')||'[]'); } catch(e){ arr = []; }
+  arr.push({text, who, time});
+  localStorage.setItem('macrobot_history', JSON.stringify(arr));
+}
+
+/* actions */
+async function handleSend(){
+  const text = inputEl.value.trim();
+  if (!text) return;
+  renderMsg(text,'user');
+  saveMessage(text,'user');
+  inputEl.vale = '';
+  inputEl.focus();
+
+  ow to reply
+  if (aiEnabled){
+   renderMsg("Thinking...", 'bot');
+    // remove the "Thinking..." placeholder before replacing
+    const botPlaceholder = messagesEl.querySelector('.msg.bot:last-child');
+    try {
+      const aiResp = await sendToAI(text);
+      if (botPlaceholder) botPlaceholder.remove();
+      renderMsg(aiResp, 'bot');
+      saveMessage(aiResp,'bot');
+    } catch(err){
+      if (botPlaceholder) botPlaceholder.remove();
+      const errText = "AI error. Using offline reply: " + localReply(text);
+     renderMsg(errText, 'bot');
+      saveMessage(errText,'bot');
+    }
+  } else {
+    const reply = localReply(text);
+    setTimeout(()=>{ renderMsg(reply,'bot'); saveMessage(re
+/* quick replies */
+function 
