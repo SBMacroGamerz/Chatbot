@@ -2,23 +2,52 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MacroBot</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>MacroBot - Mobile Chat Interface</title>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
 
 <style>
-  /* Use CSS Variables for easy theme changing */
+  /* --- CSS Variables (ChatGPT Dark Mode - Default) --- */
   :root {
-    --bg-primary: #121212;      
-    --bg-secondary: #1e1e1e;    
-    --text-color: #e0e0e0;      
-    --user-bubble: #007bff;     
-    --bot-bubble: #333333;      
-    --accent-color: #00bcd4;    
-    --border-radius-lg: 12px;
+    /* Main Customizable Variables */
+    --accent-color: #6941C6;    /* Default Purple */
+    --user-bubble: var(--accent-color); /* User bubble uses accent */
+    
+    /* Base Theme Variables */
+    --bg-primary: #000000;      
+    --bg-secondary: #000000;    
+    --bg-tertiary: #1E1E1E;     
+    --text-color: #FFFFFF;      
+    --text-muted: #BDBDBD;      
+    --bot-bubble: #2C2C2C;      
+    --delete-color: #F28B82;    
+    --border-radius-lg: 16px;   
     --border-radius-sm: 8px;
+    --transition-speed: 0.3s;
+    --sidebar-width: 280px; 
+    --top-nav-height: 50px; 
+    --input-area-height: 80px; 
+  }
+  
+  /* --- Theme: Light Mode --- */
+  .light-theme {
+    --bg-primary: #F7F7F7;      
+    --bg-secondary: #FFFFFF;    
+    --bg-tertiary: #E0E0E0;     
+    --text-color: #333333;      
+    --text-muted: #666666;      
+    --bot-bubble: #E0E0E0;      
   }
 
+  /* --- Global Styles --- */
+  .material-symbols-outlined {
+    font-variation-settings:
+    'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
+
+  html, body { height: 100%; }
+  
   body {
     background: var(--bg-primary);
     color: var(--text-color);
@@ -28,183 +57,708 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh;
+    overflow: hidden;
   }
-  .chat-container {
+  
+  .app-container {
     width: 100%;
-    max-width: 600px;
-    height: 90vh; 
+    max-width: 600px; 
+    height: 100vh; 
     display: flex;
     flex-direction: column;
     background: var(--bg-secondary);
-    border-radius: var(--border-radius-lg);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-    overflow: hidden;
-  }
-  .header {
-    text-align: center;
-    padding: 15px;
-    background: #252525;
-    border-bottom: 1px solid #333;
-    color: var(--accent-color);
-    font-size: 1.5em;
-    font-weight: 500;
-  }
-  
-  /* --- Chat Box Area --- */
-  #chatBox {
-    flex-grow: 1; 
-    overflow-y: auto;
-    padding: 20px;
-  }
-  /* Style the scrollbar (optional, but modern) */
-  #chatBox::-webkit-scrollbar {
-    width: 6px;
-  }
-  #chatBox::-webkit-scrollbar-thumb {
-    background: var(--bot-bubble);
-    border-radius: 3px;
+    position: relative;
+    overflow: hidden; 
   }
 
-  /* --- Message Bubbles --- */
-  .msg {
-    max-width: 80%;
+  /* --- Sidebar/Chat List (Standard) --- */
+  #sidebar {
+    width: var(--sidebar-width);
+    background: var(--bg-tertiary);
+    display: flex;
+    flex-direction: column;
+    position: absolute; 
+    left: calc(-1 * var(--sidebar-width)); 
+    height: 100%;
+    z-index: 300; 
+    transition: left var(--transition-speed) ease-in-out; 
+    box-shadow: 4px 0 10px rgba(0, 0, 0, 0.7);
+  }
+  #sidebar.open { left: 0; }
+  .sidebar-header {
+    padding: 15px 20px;
+    font-size: 1.4em;
+    font-weight: 700;
+    color: var(--accent-color);
+    border-bottom: 1px solid #333;
+  }
+  #newChatBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 90%;
+    margin: 10px auto;
     padding: 10px 15px;
-    margin-bottom: 15px;
+    background: var(--accent-color);
+    border: none;
+    border-radius: var(--border-radius-lg);
+    color: var(--bg-tertiary); 
+    font-weight: 700;
+    cursor: pointer;
+    transition: background var(--transition-speed);
+  }
+  /* Adjusted hover color calculation for custom colors */
+  #newChatBtn:hover { 
+    filter: brightness(0.9);
+  } 
+  #chatList {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 0 10px 10px 10px;
+  }
+  .chat-item-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 5px;
+    transition: background 0.2s;
     border-radius: var(--border-radius-sm);
+  }
+  .chat-item {
+    flex-grow: 1;
+    padding: 10px 15px;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .chat-item-wrapper:hover { background: rgba(255, 255, 255, 0.08); }
+  .chat-item-wrapper.active .chat-item {
+    background: var(--bot-bubble);
+    border-left: 3px solid var(--accent-color);
+  }
+  .delete-btn {
+    cursor: pointer;
+    color: var(--delete-color);
+    padding: 8px;
+    font-size: 18px;
+    margin-right: 5px;
+    border-radius: 50%;
+    transition: background 0.2s;
+  }
+  .delete-btn:hover { background: rgba(242, 139, 130, 0.2); }
+
+  /* --- Top Navigation Bar FIX --- */
+  #topNav {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: var(--top-nav-height); 
+    padding: 0 10px; /* Reduced padding slightly for edge visibility */
+    background: var(--bg-secondary);
+    z-index: 200;
+    box-sizing: border-box; /* Ensures padding is included in the fixed width/height */
+  }
+
+  .nav-btn {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    font-size: 24px;
+    cursor: pointer;
+    padding: 5px;
+    margin-left: 5px; /* Reduced margin */
+  }
+  #menuBtn { margin-left: 0; }
+  
+  /* --- Settings Modal Styles (Standard) --- */
+  #settingsModal {
+    display: none; 
+    position: fixed;
+    top: 60px; 
+    right: 15px;
+    width: 250px;
+    background: var(--bg-tertiary);
+    border-radius: var(--border-radius-lg);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    z-index: 400; 
+    overflow: hidden;
+  }
+  .setting-option {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    gap: 15px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.2s;
+    border-bottom: 1px solid #333;
+  }
+  .setting-option:last-child { border-bottom: none; }
+  .setting-option:hover { background: rgba(255, 255, 255, 0.1); }
+  .theme-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-grow: 1;
+  }
+  .theme-toggle .material-symbols-outlined {
+    margin-left: 5px;
+    color: var(--accent-color);
+  }
+
+  /* Color Picker styles */
+  .color-picker-section {
+    padding: 12px 15px;
+    border-bottom: 1px solid #333;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+  }
+  #accentColorPicker {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    border: none;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border-radius: 50%;
+    cursor: pointer;
+    background: none;
+    border: 3px solid var(--text-color);
+    box-shadow: 0 0 0 1px var(--bg-tertiary);
+  }
+  #accentColorPicker::-webkit-color-swatch-wrapper {
+    padding: 0;
+  }
+  #accentColorPicker::-webkit-color-swatch {
+    border: none;
+    border-radius: 50%;
+  }
+  
+  /* --- Chat Area Layout (Standard) --- */
+  .chat-area-wrapper {
+    flex-grow: 1; 
+    overflow-y: auto;
+    position: relative;
+  }
+
+  #initialState {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 0 20px;
+  }
+
+  #initialState h2 {
+    font-size: 1.8em;
+    margin-bottom: 30px;
+    color: var(--text-color);
+  }
+
+  #suggestionGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    width: 100%;
+    max-width: 400px;
+    margin-bottom: 100px; 
+  }
+
+  .suggestion-chip {
+    background: var(--bg-tertiary);
+    border: 1px solid #444;
+    color: var(--text-color);
+    padding: 12px;
+    border-radius: var(--border-radius-sm);
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .suggestion-chip:hover { background: #3c3c3c; }
+  .chip-icon {
+    font-size: 1.4em;
+    margin-bottom: 5px;
+    color: var(--accent-color);
+  }
+  .chip-text { font-size: 0.9em; font-weight: 500; }
+
+  /* --- Chat Box Area (Standard) --- */
+  #chatBox {
+    width: 100%; 
+    height: 100%;
+    padding: 15px; 
+    overflow-y: auto;
+    display: none; 
+  }
+  #chatBox.active { display: block; }
+  
+  #chatBox::-webkit-scrollbar { width: 6px; }
+  #chatBox::-webkit-scrollbar-thumb { background: var(--bot-bubble); border-radius: 3px; }
+
+  /* --- Message Bubbles (Standard) --- */
+  .msg {
+    max-width: 85%;
+    padding: 12px 18px;
+    margin-bottom: 20px; 
+    border-radius: var(--border-radius-lg); 
     line-height: 1.6;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); 
   }
   .user {
     background: var(--user-bubble);
-    color: white;
+    color: #fff; 
     margin-left: auto; 
-    border-top-right-radius: 2px; 
+    border-top-right-radius: var(--border-radius-sm); 
   }
   .bot {
     background: var(--bot-bubble);
     color: var(--text-color);
     margin-right: auto; 
-    border-top-left-radius: 2px;
+    border-top-left-radius: var(--border-radius-sm);
   }
   
-  /* --- Input Area --- */
+  /* --- Input Area FIX --- */
   #inputArea {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    max-width: 600px;
+    padding: 10px 10px 30px 10px; /* Reduced horizontal padding */
+    height: var(--input-area-height); 
+    box-sizing: border-box; 
+    background: var(--bg-secondary);
     display: flex;
-    padding: 15px;
-    background: #252525;
-    border-top: 1px solid #333;
+    align-items: center;
     gap: 10px;
+    z-index: 200;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
   }
+  
+  #attachBtn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 28px;
+    cursor: pointer;
+    padding: 0;
+  }
+
   #userInput {
     flex: 1;
-    padding: 12px;
-    border: 1px solid #444;
-    border-radius: var(--border-radius-lg);
-    background: #333;
-    color: white;
+    padding: 12px 18px;
+    border: none;
+    border-radius: 30px; 
+    background: var(--bg-tertiary);
+    color: var(--text-color);
     outline: none;
     font-size: 16px;
-    resize: none;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
+    font-style: italic;
   }
+  
+  #userInput::placeholder {
+    color: var(--text-muted);
+    font-style: italic;
+  }
+
   #sendBtn {
-    padding: 12px 20px;
+    /* FIX: Added margin-right to pull button off the edge */
+    margin-right: 5px; 
+    display: none; 
+    width: 40px;
+    height: 40px;
+    padding: 0;
     background: var(--accent-color);
     border: none;
-    border-radius: var(--border-radius-lg);
-    color: #121212;
-    font-weight: 700;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 20px;
     cursor: pointer;
-    transition: background 0.3s;
-  }
-  #sendBtn:hover {
-    background: #00a0b0;
+    transition: background var(--transition-speed);
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
   }
 </style>
 
 </head>
-<body>
+<body class="dark-theme">
 
-<div class="chat-container">
-  <div class="header">MacroBot</div>
-  <div id="chatBox"></div>
+<div class="app-container">
+    
+    <div id="topNav">
+        <button class="nav-btn" id="menuBtn">
+            <span class="material-symbols-outlined">menu</span>
+        </button>
+        <span style="flex-grow: 1;"></span>
+        <div>
+            <button class="nav-btn" id="settingsBtn">
+                <span class="material-symbols-outlined">settings</span>
+            </button>
+        </div>
+    </div>
+    
+    <div id="settingsModal">
+        <div class="setting-option" onclick="alert('Sign In functionality would go here!')">
+            <span class="material-symbols-outlined">login</span>
+            Sign In
+        </div>
+        <div class="setting-option" onclick="alert('Log Out functionality would go here!')">
+            <span class="material-symbols-outlined">logout</span>
+            Log Out
+        </div>
+        
+        <div class="color-picker-section">
+            <span style="display: flex; align-items: center; gap: 15px;">
+                <span class="material-symbols-outlined">colorize</span>
+                **Accent Color**
+            </span>
+            <input type="color" id="accentColorPicker" value="#6941C6">
+        </div>
+        
+        <div class="setting-option" id="themeOption">
+            <span class="material-symbols-outlined">palette</span>
+            Theme Mode: 
+            <span class="theme-toggle">
+                <span id="currentThemeName">Dark</span>
+                <span class="material-symbols-outlined">light_mode</span>
+            </span>
+        </div>
+    </div>
 
-  <div id="inputArea">
-    <input type="text" id="userInput" placeholder="Type your macro request..." />
-    <button id="sendBtn">Send</button>
-  </div>
+    <div id="sidebar">
+        <div class="sidebar-header">MacroBot Chats</div>
+        <button id="newChatBtn">
+            <span class="material-symbols-outlined">add_circle</span> New Chat
+        </button>
+        <div id="chatList">
+            </div>
+    </div>
+    
+    <div class="chat-area-wrapper" style="margin-top: var(--top-nav-height); margin-bottom: var(--input-area-height);">
+        
+        <div id="initialState">
+            <h2>What can I help with?</h2>
+            <div id="suggestionGrid">
+                <div class="suggestion-chip" data-query="Write a Python script to optimize performance">
+                    <span class="material-symbols-outlined chip-icon">code</span>
+                    <span class="chip-text">Write Code</span>
+                </div>
+                <div class="suggestion-chip" data-query="Summarize the latest AI news">
+                    <span class="material-symbols-outlined chip-icon">article</span>
+                    <span class="chip-text">Summarize text</span>
+                </div>
+                <div class="suggestion-chip" data-query="Give me advice on starting a new project">
+                    <span class="material-symbols-outlined chip-icon">school</span>
+                    <span class="chip-text">Get advice</span>
+                </div>
+                <div class="suggestion-chip" data-query="Help me brainstorm ideas for a new company name">
+                    <span class="material-symbols-outlined chip-icon">lightbulb</span>
+                    <span class="chip-text">Brainstorm</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="chatBox"></div>
+        
+    </div>
+    
+    <div id="inputArea">
+      <button id="attachBtn">
+        <span class="material-symbols-outlined">add</span>
+      </button>
+      <input type="text" id="userInput" placeholder="Ask MacroBot..." />
+      <button id="sendBtn">
+        <span class="material-symbols-outlined">send</span>
+      </button>
+    </div>
+
 </div>
 
 <script>
+const body = document.body;
+const root = document.documentElement; 
 const chatBox = document.getElementById("chatBox");
 const userInput = document.getElementById("userInput");
 const sendBtn = document.getElementById("sendBtn");
+const initialState = document.getElementById("initialState");
+const suggestionGrid = document.getElementById("suggestionGrid");
+const attachBtn = document.getElementById("attachBtn");
+const sidebar = document.getElementById("sidebar");
+const menuBtn = document.getElementById("menuBtn");
+const chatList = document.getElementById("chatList");
+const newChatBtn = document.getElementById("newChatBtn");
+const settingsModal = document.getElementById("settingsModal");
+const settingsBtn = document.getElementById("settingsBtn");
+const themeOption = document.getElementById("themeOption");
+const currentThemeName = document.getElementById("currentThemeName");
+const accentColorPicker = document.getElementById("accentColorPicker");
 
-// 1. REVERTED: Removed conversationHistory array
+// NEW: Variable to store the user's custom color preference
+let userCustomColor = accentColorPicker.value;
 
-function addMessage(text, sender){
-  let div = document.createElement("div");
-  div.className = "msg " + sender;
-  div.innerText = text; 
-  chatBox.appendChild(div);
-  chatBox.scrollTop = chatBox.scrollHeight;
+// --- Chat State and History (Standard) ---
+let chats = {};
+let currentChatId = 0;
+let isChatActive = false; 
+
+if (Object.keys(chats).length === 0) {
+    createNewChat();
 }
 
-// 2. REVERTED: Function sends only the current message string
-async function sendToMacroServer(msg){
-  try {
-    const SERVER_URL = "http://127.0.0.1:3000/api/ai-query";
+// --- Theme and Color Logic ---
+
+function setCustomAccentColor(color) {
+    // 1. Save the color locally
+    userCustomColor = color;
     
-    const res = await fetch(SERVER_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ 
-        // Sending only the simple 'message' field
-        message: msg 
-      })
-    });
+    // 2. Apply the chosen color to the CSS variable
+    root.style.setProperty('--accent-color', color);
+    root.style.setProperty('--user-bubble', color);
+    
+    // 3. Update the color picker's value if it wasn't the source
+    accentColorPicker.value = color;
+}
 
-    if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(`Server responded with status ${res.status}: ${errorData.reply || res.statusText}`);
+function toggleTheme() {
+    const isDark = !body.classList.contains('light-theme');
+    
+    if (isDark) {
+        // Switch to Light Theme
+        body.classList.add('light-theme');
+        currentThemeName.textContent = 'Light';
+        themeOption.querySelector('.material-symbols-outlined').textContent = 'dark_mode';
+    } else {
+        // Switch to Dark Theme
+        body.classList.remove('light-theme');
+        currentThemeName.textContent = 'Dark';
+        themeOption.querySelector('.material-symbols-outlined').textContent = 'light_mode';
     }
+    
+    // CRITICAL FIX: Re-apply the user's last chosen color
+    // This overrides the hardcoded accent color that comes with the theme class.
+    setCustomAccentColor(userCustomColor);
+}
 
-    const data = await res.json();
-    return data.reply;
-  } catch (err){
-    console.error("Connection/Server Error:", err);
-    return `Server error ❌: Failed to connect or received a bad response. (${err.message})`;
-  }
+// --- Settings Modal Logic (Standard) ---
+function toggleSettingsModal() {
+    sidebar.classList.remove('open');
+    settingsModal.style.display = settingsModal.style.display === 'block' ? 'none' : 'block';
+}
+
+
+// --- Chat Management Functions (Standard) ---
+function toggleSidebar() {
+    settingsModal.style.display = 'none';
+    sidebar.classList.toggle('open');
+}
+
+function deleteChat(id, event) {
+    event.stopPropagation();
+    if (Object.keys(chats).length === 1) {
+        alert("Cannot delete the last remaining chat session.");
+        return;
+    }
+    if (confirm("Are you sure you want to delete this chat history?")) {
+        delete chats[id];
+        if (id == currentChatId) {
+            const remainingIds = Object.keys(chats);
+            switchChat(remainingIds[remainingIds.length - 1]);
+        }
+        updateChatList();
+    }
+}
+
+function createNewChat() {
+    const newId = Date.now(); 
+    chats[newId] = []; 
+    switchChat(newId); 
+    updateChatList();
+    activateChatUI(true); 
+}
+
+function switchChat(id) {
+    if (!chats[id]) return;
+    currentChatId = id; 
+    chatBox.innerHTML = ""; 
+    
+    if (chats[id].length === 0) {
+        activateChatUI(true);
+    } else {
+        activateChatUI(false); 
+        chats[id].forEach(msg => {
+            addMessage(msg.text, msg.sender, false);
+        });
+    }
+    
+    document.querySelectorAll('.chat-item-wrapper').forEach(item => {
+        item.classList.remove('active');
+        if (item.dataset.chatId == id) {
+            item.classList.add('active');
+        }
+    });
+    sidebar.classList.remove('open');
+}
+
+function updateChatList() {
+    chatList.innerHTML = ""; 
+    for (const id in chats) {
+        const history = chats[id];
+        
+        const title = history.length > 0 && history[0].sender === 'user' 
+                      ? history[0].text.substring(0, 25) + (history[0].text.length > 25 ? '...' : '')
+                      : `New Chat ${id.toString().substring(8)}`;
+
+        const wrapper = document.createElement("div");
+        wrapper.className = "chat-item-wrapper" + (id == currentChatId ? " active" : "");
+        wrapper.dataset.chatId = id;
+        
+        const item = document.createElement("div");
+        item.className = "chat-item";
+        item.innerText = title;
+        item.addEventListener('click', () => switchChat(id));
+        
+        const deleteButton = document.createElement("span");
+        deleteButton.className = "material-symbols-outlined delete-btn";
+        deleteButton.innerText = "delete";
+        deleteButton.addEventListener('click', (event) => deleteChat(id, event));
+        
+        wrapper.appendChild(item);
+        wrapper.appendChild(deleteButton);
+        chatList.appendChild(wrapper);
+    }
+}
+
+function activateChatUI(showInitialState) {
+    if (showInitialState) {
+        initialState.style.display = 'flex';
+        chatBox.classList.remove('active');
+        isChatActive = false;
+    } else {
+        initialState.style.display = 'none';
+        chatBox.classList.add('active');
+        isChatActive = true;
+    }
+}
+
+
+// --- Message Handling Functions (Standard) ---
+function addMessage(text, sender, save = true){
+    if (save) {
+        chats[currentChatId].push({ sender, text });
+        if (chats[currentChatId].length === 1 && sender === 'user') {
+            updateChatList();
+        }
+    }
+    let div = document.createElement("div");
+    div.className = "msg " + sender;
+    div.innerHTML = formatMarkdown(text); 
+    chatBox.appendChild(div);
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+function formatMarkdown(text) {
+    text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    text = text.replace(/## (.*)/g, '<h3>$1</h3>');
+    text = text.replace(/\* (.*)/g, '<li>$1</li>'); 
+    text = text.replace(/\n/g, '<br>');
+    return text;
+}
+
+
+async function sendToMacroServer(msg){
+    try {
+        const SERVER_URL = "http://127.0.0.1:3000/api/ai-query";
+        const res = await fetch(SERVER_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: msg })
+        });
+        if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(`Server responded with status ${res.status}: ${errorData.reply || res.statusText}`);
+        }
+        const data = await res.json();
+        return data.reply;
+    } catch (err){
+        console.error("Connection/Server Error:", err);
+        return `Server error ❌: Failed to connect or received a bad response. (${err.message})`;
+    }
 }
 
 async function sendMsg(){
-  let text = userInput.value.trim();
-  if(!text) return;
-
-  // Add user message to chat box
-  addMessage(text, "user");
-  
-  userInput.value = "";
-
-  // Add 'typing...' message
-  addMessage("MacroBot is thinking...", "bot");
-
-  // Send the message string
-  let reply = await sendToMacroServer(text);
-
-  // Remove the temporary 'typing...' message
-  document.querySelector(".bot:last-child").remove();
-
-  // Add the final bot reply to chat box
-  addMessage(reply, "bot");
-  
-  // 3. REVERTED: Removed history logging
+    let text = userInput.value.trim();
+    if(!text) return;
+    activateChatUI(false); 
+    addMessage(text, "user");
+    userInput.value = "";
+    sendBtn.style.display = 'none';
+    attachBtn.style.display = 'block';
+    addMessage("MacroBot is thinking...", "bot", false); 
+    let reply = await sendToMacroServer(text);
+    document.querySelector(".bot:last-child").remove();
+    addMessage(reply, "bot");
 }
 
+// --- Event Listeners ---
+menuBtn.onclick = toggleSidebar; 
+newChatBtn.onclick = createNewChat;
+settingsBtn.onclick = toggleSettingsModal;
+themeOption.onclick = toggleTheme;
+
+// Listener for the color picker input
+accentColorPicker.addEventListener('input', (event) => {
+    setCustomAccentColor(event.target.value);
+});
+
+
+suggestionGrid.querySelectorAll('.suggestion-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+        userInput.value = chip.dataset.query;
+        sendMsg();
+    });
+});
+
 sendBtn.onclick = sendMsg;
+
+userInput.addEventListener('input', () => {
+    if (userInput.value.trim().length > 0) {
+        sendBtn.style.display = 'flex'; 
+        attachBtn.style.display = 'none';
+    } else {
+        sendBtn.style.display = 'none'; 
+        attachBtn.style.display = 'block'; 
+    }
+});
 
 userInput.addEventListener("keypress", (e)=>{
   if(e.key === "Enter") sendMsg();
 });
+
+// Initial Setup
+settingsModal.style.display = 'none';
+sendBtn.style.display = 'none';
+updateChatList();
+// Ensure the initial accent color is correctly set on load
+setCustomAccentColor(accentColorPicker.value);
 </script>
 
 </body>
